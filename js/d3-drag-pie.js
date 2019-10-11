@@ -1,4 +1,6 @@
 function d3dp(config) {
+    var _config = config;
+
     function create(data, domTarget) {
         var _data = data;
         var _chart = null;
@@ -80,12 +82,18 @@ function d3dp(config) {
         }
 
         function segDragged(d) {
-            if(shiftSegment(d.data, d3.event.dx, _segmentScale)) draw();
+            if(shiftSegment(d.data, d3.event.dx, _segmentScale)) {
+                if(_config.events && _config.events.segment && _config.events.segment.drag) _config.events.segment.drag(d.data);
+                draw();
+            }
         }
 
         function catDragged(d) {
             if((_dragSegmentAndCategoryTogether && shiftSegment(d.parentSegment, d3.event.dx/2, _segmentScale)) ||
-                shiftCategory(d.category, d3.event.dy, _categoryScale)) draw();
+                shiftCategory(d.category, d3.event.dy, _categoryScale)) {
+                    if(_config.events && _config.events.category && _config.events.category.drag) _config.events.category.drag(d.category, d.parentSegment);
+                    draw();
+                }
         }
 
         function draw() {
@@ -97,11 +105,17 @@ function d3dp(config) {
                 .data(arcData);
 
             // Enter.
-            n.enter()
+            var nEnter = n.enter()
                 .append('path')
                 .attr('d', arcGenerator)
                 .call(d3.drag().on("drag", segDragged));
             
+            if(_config.events && _config.events.segment) {
+                if(_config.events.segment.mouseover) nEnter.on('mouseover', d => _config.events.segment.mouseover(d.data))
+                if(_config.events.segment.mouseout) nEnter.on('mouseout', d => _config.events.segment.mouseout(d.data))
+                if(_config.events.segment.click) nEnter.on('click', d => _config.events.segment.click(d.data));
+            }
+
             // Update.
             n.attr('d', arcGenerator);
 
@@ -135,12 +149,18 @@ function d3dp(config) {
                     .data(catPaths);
                 
                 // Enter.
-                c.enter()
+                var cEnter = c.enter()
                     .append('path')
                     .attr('d', x => x.path)
                     .attr('class', 'segcats' + i)
                     .style('fill', x => _color(x.category.id))
                     .call(d3.drag().on("drag", catDragged));
+
+                if(_config.events && _config.events.category) {
+                    if(_config.events.category.mouseover) cEnter.on('mouseover', d => _config.events.category.mouseover(d.category, d.parentSegment))
+                    if(_config.events.category.mouseout) cEnter.on('mouseout', d => _config.events.category.mouseout(d.category, d.parentSegment))
+                    if(_config.events.category.click) cEnter.on('click', d => _config.events.category.click(d.category, d.parentSegment));
+                }
 
                 // Update.
                 c.attr('d', x => x.path);

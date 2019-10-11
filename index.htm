@@ -49,7 +49,20 @@
 
             function ready() {
                 dragpie = d3dp({
-                    categoryColors: ["green", "violet", "red"]
+                    categoryColors: ["green", "violet", "red"],
+                    events: {
+                        segment: {
+                            mouseover: function(seg) { console.log(seg.name) },
+                            click: function(seg) { console.log(seg.name) },
+                            drag:  function(seg) { console.log(seg.name) }
+                        },
+                        category: {
+                            mouseover: function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) },
+                            mouseout: function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) },                            
+                            click: function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) },
+                            drag:  function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) }
+                        }
+                    }
                 });
 
                 n1 = dragpie.create(d, document.getElementById('pie'));
