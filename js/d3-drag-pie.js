@@ -38,26 +38,29 @@ function d3dp(config) {
             domTarget.appendChild(_chart);
         }
 
-        function segDragged(d) {
-            var dx = d3.event.dx;
-            var dy = d3.event.dy;
-            d.data.value += dx;
-            
-            // Prevent value becoming less than enforced minimum segment size.
-            if(d.data.value < _segmentDragMin) d.data.value = _segmentDragMin;
+        function checkBounds(segment, category) {
+            if(segment) {
+                // Prevent value becoming less than enforced minimum segment size.
+                if(segment.value < _segmentDragMin) segment.value = _segmentDragMin;
+            }
 
+            if(category) {
+                // Prevent value becoming less than enforced minimum segment size.
+                if(category.value < _segmentDragMin) category.value = _categoryDragMin;
+                else if(category.value > _outerRadius) category.value = _outerRadius;
+            }
+        }
+
+        function segDragged(d) {
+            d.data.value += d3.event.dx;            
+            checkBounds(d.data);
             draw();
         }
 
         function catDragged(d) {
-            var dx = d3.event.dx;
-            var dy = d3.event.dy;
-            d.category.value += dx;
-            
-            // Prevent value becoming less than enforced minimum segment size.
-            if(d.category.value < _segmentDragMin) d.category.value = _categoryDragMin;
-            else if(d.category.value > _outerRadius) d.category.value = _outerRadius;
-
+            d.parentSegment.value += d3.event.dx;;
+            d.category.value -= d3.event.dy;
+            checkBounds(d.parentSegment, d.category);
             draw();
         }
 
@@ -94,6 +97,7 @@ function d3dp(config) {
                 for(var j = 0; j < seg.data.categories.length; j++) {
                     catPaths.push({
                         category: seg.data.categories[j],
+                        parentSegment: seg.data,
                         path: catArc({ outerRadius: _innerRadius + seg.data.categories[j].value })
                     });
                 }
