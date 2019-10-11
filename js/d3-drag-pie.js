@@ -8,6 +8,8 @@ function d3dp(config) {
         var _outerRadius = 100;
         var _cornerRadius = 5;
 
+        var _segmentDragMin = 5;
+
         var _color = d3.scaleOrdinal()
             .range(config.categoryColors);
 
@@ -35,6 +37,18 @@ function d3dp(config) {
             domTarget.appendChild(_chart);
         }
 
+        function segDragged(d) {
+            var dx = d3.event.dx;
+            var dy = d3.event.dy;
+            console.log(dx + ',' + dy);
+            d.data.value += dx;
+            
+            // Prevent value becoming less than enforced minimum segment size.
+            if(d.data.value < _segmentDragMin) d.data.value = _segmentDragMin;
+
+            draw();
+        }
+
         function draw() {
             var arcData = pieGenerator(_data);
 
@@ -47,6 +61,7 @@ function d3dp(config) {
             n.enter()
                 .append('path')
                 .attr('d', arcGenerator)
+                .call(d3.drag().on("drag", segDragged));
             
             // Update.
             n.attr('d', arcGenerator);
