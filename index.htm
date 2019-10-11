@@ -53,6 +53,8 @@
                     target: document.getElementById('pie'),
                     data: d,
                     categoryColors: ["green", "violet", "red"],
+                    segmentScaleMaximum: 100,
+                    categoryScaleMaximum: 100,
                     accessors: {
                         getSegmentValue: function(seg) { return seg.value },
                         setSegmentValue: function(seg, value) { seg.value = value; },

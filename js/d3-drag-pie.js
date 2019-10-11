@@ -37,17 +37,17 @@ function d3dp() {
             .range(config.categoryColors);
 
         // Initial maximal values of data for segments and categories.
-        var _initialSegmentMax = d3.max(_data, x => _accessors.getSegmentValue(x));
-        var _initialCategoryMax = d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)));
+        var _segmentScaleMax = _config.segmentScaleMaximum || d3.max(_data, x => _accessors.getSegmentValue(x));
+        var _categoryScaleMax = _config.categoryScaleMaximum || d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)));
 
         // Scales for segment mappings.
         var _segmentScale = d3.scaleLinear()
-            .domain([0, _initialSegmentMax]) // Input data range.
+            .domain([0, _segmentScaleMax]) // Input data range.
             .range([0, 100]);
         
         // Scale for category mappings.
         var _categoryScale = d3.scaleLinear()
-            .domain([0, _initialCategoryMax])
+            .domain([0, _categoryScaleMax])
             .range([0, _outerRadius - _outerBufferZone]);
         
         // Pie Segment helper.
