@@ -3,20 +3,35 @@ function d3dp(config) {
         var _data = data;
         var _chart = null;
         var _chart_g = null;
+        
+        var _pieRadius = 500;
 
         var _innerRadius = 0;
-        var _outerRadius = 100;
+        var _outerRadius = 100; // Category data maximum value.
+        var _outerBufferZone = 10; // Outer handle zone for background segment.
         var _cornerRadius = 5;
 
-        var _segmentDragMin = 5;
-        var _categoryDragMin = 5;
+        var _segmentDragMin = 5; // Segment minimum permitted size when dragging.
+        var _categoryDragMin = 5; // Category minimum permitted size when dragging.
+
+        var _dragSegmentAndCategoryTogether = false; // Combined x drag segment and y drag category.
 
         var _color = d3.scaleOrdinal()
             .range(config.categoryColors);
 
+        // Scales for segment mappings.
+        var _segmentScale = d3.scaleLinear()
+            .domain([0, d3.max(_data, x => x.value)]) // Input data range.
+            .range([0, 100]);
+        
+        // Scale for category mappings.
+        var _categoryScale = d3.scaleLinear()
+            .domain([0, d3.max(_data, s => d3.max(s.categories, c => c.value))])
+            .range([0, _outerRadius - _outerBufferZone]);
+        
         // Pie Segment helper.
         var pieGenerator = d3.pie()
-            .value(d => d.value)
+            .value(d => _segmentScale(d.value))
             .sort((a, b) => a.name.localeCompare(b.name));
     
         // Arc calculation helper.
@@ -28,40 +43,49 @@ function d3dp(config) {
         function init() {
             // Create SVG object.
             _chart = document.createElementNS("http://www.w3.org/2000/svg", 'svg'); //Create a path in SVG's namespace
-            _chart.setAttribute('width', '500');
-            _chart.setAttribute('height', '500');
+            _chart.setAttribute('width', _pieRadius);
+            _chart.setAttribute('height', _pieRadius);
 
             _chart_g = document.createElementNS("http://www.w3.org/2000/svg", 'g'); //Create a path in SVG's namespace
-            _chart_g.setAttribute('transform', 'translate(150,250)');
+            _chart_g.setAttribute('transform', 'scale(' +
+                ((_pieRadius / _outerRadius)/2) +
+                ') translate(' + (_pieRadius / (_pieRadius/_outerRadius)) + ',' +
+                (_pieRadius / (_pieRadius/_outerRadius)) + ')');
 
             _chart.appendChild(_chart_g);
             domTarget.appendChild(_chart);
         }
 
-        function checkBounds(segment, category) {
-            if(segment) {
-                // Prevent value becoming less than enforced minimum segment size.
-                if(segment.value < _segmentDragMin) segment.value = _segmentDragMin;
-            }
+        function shiftSegment(segment, amount, scale) {
+            if(amount == 0) return false;
+            var v = segment.value + amount;
 
-            if(category) {
-                // Prevent value becoming less than enforced minimum segment size.
-                if(category.value < _segmentDragMin) category.value = _categoryDragMin;
-                else if(category.value > _outerRadius) category.value = _outerRadius;
+            if(scale(v) > _segmentDragMin) {
+                segment.value = v;
+                return true;
             }
+            else return false;
+        }
+
+        function shiftCategory(category, amount, scale) {
+            if(amount == 0) return false;
+            var v = category.value - amount;
+
+            // Prevent value becoming less than enforced minimum segment size.
+            if(scale(v) > _categoryDragMin && scale(v) < _outerRadius - _outerBufferZone) {
+                category.value = v;
+                return true;
+            }
+            else return false;
         }
 
         function segDragged(d) {
-            d.data.value += d3.event.dx/2;            
-            checkBounds(d.data);
-            draw();
+            if(shiftSegment(d.data, d3.event.dx, _segmentScale)) draw();
         }
 
         function catDragged(d) {
-            d.parentSegment.value += d3.event.dx;;
-            d.category.value -= d3.event.dy/2;
-            checkBounds(d.parentSegment, d.category);
-            draw();
+            if((_dragSegmentAndCategoryTogether && shiftSegment(d.parentSegment, d3.event.dx/2, _segmentScale)) ||
+                shiftCategory(d.category, d3.event.dy, _categoryScale)) draw();
         }
 
         function draw() {
@@ -98,7 +122,7 @@ function d3dp(config) {
                     catPaths.push({
                         category: seg.data.categories[j],
                         parentSegment: seg.data,
-                        path: catArc({ outerRadius: _innerRadius + seg.data.categories[j].value })
+                        path: catArc({ outerRadius: _innerRadius + _categoryScale(seg.data.categories[j].value) })
                     });
                 }
 
