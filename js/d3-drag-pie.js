@@ -9,6 +9,7 @@ function d3dp(config) {
         var _cornerRadius = 5;
 
         var _segmentDragMin = 5;
+        var _categoryDragMin = 5;
 
         var _color = d3.scaleOrdinal()
             .range(config.categoryColors);
@@ -40,11 +41,22 @@ function d3dp(config) {
         function segDragged(d) {
             var dx = d3.event.dx;
             var dy = d3.event.dy;
-            console.log(dx + ',' + dy);
             d.data.value += dx;
             
             // Prevent value becoming less than enforced minimum segment size.
             if(d.data.value < _segmentDragMin) d.data.value = _segmentDragMin;
+
+            draw();
+        }
+
+        function catDragged(d) {
+            var dx = d3.event.dx;
+            var dy = d3.event.dy;
+            d.category.value += dx;
+            
+            // Prevent value becoming less than enforced minimum segment size.
+            if(d.category.value < _segmentDragMin) d.category.value = _categoryDragMin;
+            else if(d.category.value > _outerRadius) d.category.value = _outerRadius;
 
             draw();
         }
@@ -99,7 +111,8 @@ function d3dp(config) {
                     .append('path')
                     .attr('d', x => x.path)
                     .attr('class', 'segcats' + i)
-                    .style('fill', (x, idx) => _color(idx));
+                    .style('fill', (x, idx) => _color(idx))
+                    .call(d3.drag().on("drag", catDragged));
 
                 // Update.
                 c.attr('d', x => x.path);
