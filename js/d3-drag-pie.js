@@ -111,7 +111,7 @@ function d3dp(config) {
                     .append('path')
                     .attr('d', x => x.path)
                     .attr('class', 'segcats' + i)
-                    .style('fill', (x) => _color(x.category.id))
+                    .style('fill', x => _color(x.category.id))
                     .call(d3.drag().on("drag", catDragged));
 
                 // Update.
