@@ -135,6 +135,7 @@ function d3dp() {
             var nEnter = n.enter()
                 .append('path')
                 .attr('d', arcGenerator)
+                .attr('class', (d,i) => 'd3dp-segment d3dp-segment' + i)
                 .call(d3.drag()
                     .on('start', startDragging)
                     .on('drag', segDragged)
@@ -176,14 +177,14 @@ function d3dp() {
 
                 // Select.
                 var c = d3.select(_chart_g)
-                    .selectAll('.segcats' + i)
+                    .selectAll('.d3dp-segment-category' + i)
                     .data(catPaths);
                 
                 // Enter.
                 var cEnter = c.enter()
                     .append('path')
                     .attr('d', x => x.path)
-                    .attr('class', 'segcats' + i)
+                    .attr('class', 'd3dp-segment-categories d3dp-segment-category' + i)
                     .style('fill', x => _color(x.category.id))
                     .call(d3.drag()
                             .on('start', startDragging)
