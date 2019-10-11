@@ -1,0 +1,62 @@
+<html>
+    <head>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script src="./js/d3-drag-pie.js"></script>
+    
+        <style>
+            path {
+                fill: orange;
+                stroke: white;
+            }
+        </style>
+
+        <script>
+            var d = [
+                    { name: "Segment 1", value: 20,
+                        categories: [
+                            { name: "Category 1", value: 20 },
+                            { name: "Category 2", value: 50 },
+                            { name: "Category 3", value: 10 }
+                        ] },
+                    { name: "Segment 2", value: 40,
+                        categories: [
+                            { name: "Category 1", value: 30 },
+                            { name: "Category 2", value: 60 },
+                            { name: "Category 3", value: 10 }
+                        ] },
+                    { name: "Segment 3", value: 50,
+                        categories: [
+                            { name: "Category 1", value: 40 },
+                            { name: "Category 2", value: 20 },
+                            { name: "Category 3", value: 10 }
+                        ] },
+                    { name: "Segment 4", value: 10,
+                        categories: [
+                            { name: "Category 1", value: 10 },
+                            { name: "Category 2", value: 10 },
+                            { name: "Category 3", value: 50 }
+                        ] },
+                    { name: "Segment 5", value: 30,
+                        categories: [
+                            { name: "Category 1", value: 50 },
+                            { name: "Category 2", value: 10 },
+                            { name: "Category 3", value: 20 }
+                        ] }
+                ];
+            
+            var dragpie = null;
+            var n1 = null;
+
+            function ready() {
+                dragpie = d3dp({
+                    categoryColors: ["green", "violet", "red"]
+                });
+
+                n1 = dragpie.create(d, document.getElementById('pie'));
+            }
+        </script>
+    </head>
+    <body onload="ready();" >
+        <div id="pie"></div>
+    </body>
+</html>
