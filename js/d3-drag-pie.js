@@ -1,3 +1,7 @@
+/*
+ * Author: Spencer Hedger
+ * GitHub: https://github.com/spencerhedger/d3-drag-pie
+ */
 function d3dp(config) {
     var _config = config;
 
