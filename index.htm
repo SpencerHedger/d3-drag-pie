@@ -4,6 +4,9 @@
         <script src="./js/d3-drag-pie.js"></script>
     
         <style>
+            body {
+                font-family: verdana;
+            }
             path.d3dp-segment {
                 fill: whitesmoke;
                 stroke: silver;
@@ -59,6 +62,9 @@
                     categoryColors: ["rgb(186, 193, 221)", "rgb(146, 157, 202)", "rgb(83, 100, 172)"],
                     segmentScaleMaximum: 100,
                     categoryScaleMaximum: 60,
+                    showSegmentLabels: true,
+                    segmentsDraggable: true,
+                    categoriesDraggable: true,
                     accessors: {
                         getSegmentValue: function(seg) { return seg.value },
                         setSegmentValue: function(seg, value) { seg.value = value; },

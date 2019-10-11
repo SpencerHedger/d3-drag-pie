@@ -21,6 +21,7 @@ function d3dp() {
         var _chart_g = null;
         
         var _pieRadius = 500;
+        var _svgSize = _pieRadius + (_pieRadius / 3);
 
         var _innerRadius = 0;
         var _outerRadius = 100; // Category data maximum value when scaled.
@@ -64,14 +65,14 @@ function d3dp() {
         function init() {
             // Create SVG object.
             _chart = document.createElementNS("http://www.w3.org/2000/svg", 'svg'); //Create a path in SVG's namespace
-            _chart.setAttribute('width', _pieRadius);
-            _chart.setAttribute('height', _pieRadius);
+            _chart.setAttribute('width', _svgSize);
+            _chart.setAttribute('height', _svgSize);
 
             _chart_g = document.createElementNS("http://www.w3.org/2000/svg", 'g'); //Create a path in SVG's namespace
             _chart_g.setAttribute('transform', 'scale(' +
                 ((_pieRadius / _outerRadius)/2) +
-                ') translate(' + (_pieRadius / (_pieRadius/_outerRadius)) + ',' +
-                (_pieRadius / (_pieRadius/_outerRadius)) + ')');
+                ') translate(' + (_svgSize / (_pieRadius/_outerRadius)) + ',' +
+                (_svgSize / (_pieRadius/_outerRadius)) + ')');
 
             _chart.appendChild(_chart_g);
             _config.target.appendChild(_chart);
@@ -135,13 +136,34 @@ function d3dp() {
             var nEnter = n.enter()
                 .append('path')
                 .attr('d', arcGenerator)
-                .attr('class', (d,i) => 'd3dp-segment d3dp-segment' + i)
-                .call(d3.drag()
-                    .on('start', startDragging)
-                    .on('drag', segDragged)
-                    .on('end', endDragging)
+                .attr('id', (d,i) => 'd3dp-segment' + i)
+                .attr('class', d => 'd3dp-segment')
+
+            if(_config.segmentsDraggable) {
+                nEnter
+                    .style('cursor', 'ew-resize')
+                    .call(d3.drag()
+                        .on('start', startDragging)
+                        .on('drag', segDragged)
+                        .on('end', endDragging)
                     );
+            }
             
+            //Append the label names.
+            if(_config.showSegmentLabels) {
+                d3.select(_chart_g)
+                    .selectAll('.segmentTextLabel')
+                    .data(arcData)
+                    .enter().append('text')
+                    .attr('class', 'd3dp-segment-text-label')
+                    .attr('style', 'font-size: 5px;')
+                    .attr('dy', 7)
+                    .attr('dx', 5)
+                    .append('textPath')
+                    .attr('xlink:href', (d,i) => '#d3dp-segment' + i)
+                    .text(d => d.data.name);
+            }
+
             if(_config.events && _config.events.segment) {
                 if(_config.events.segment.mouseover) nEnter.on('mouseover', function(d) { if(!_isDragging) _config.events.segment.mouseover(d.data) })
                 if(_config.events.segment.mouseout) nEnter.on('mouseout', function(d) { if(!_isDragging) _config.events.segment.mouseout(d.data) })
@@ -184,13 +206,19 @@ function d3dp() {
                 var cEnter = c.enter()
                     .append('path')
                     .attr('d', x => x.path)
+                    .attr("id", (d,j) => 'd3dp-segment' + i + '-category' + j)
                     .attr('class', 'd3dp-segment-categories d3dp-segment-category' + i)
                     .style('fill', x => _color(x.category.id))
-                    .call(d3.drag()
+
+                if(_config.categoriesDraggable) {
+                    cEnter
+                        .style('cursor', 'ns-resize')
+                        .call(d3.drag()
                             .on('start', startDragging)
                             .on('drag', catDragged)
                             .on('end', endDragging)
                         );
+                }
 
                 if(_config.events && _config.events.category) {
                     if(_config.events.category.mouseover) cEnter.on('mouseover', function(d) { if(!_isDragging) _config.events.category.mouseover(d.category, d.parentSegment) })
