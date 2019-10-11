@@ -1,6 +1,16 @@
 function d3dp(config) {
     var _config = config;
 
+    // Accessors for data values (provide some basic ones where not implemented in configuration)
+    var _accessors = _config.accessors || {};
+    if(!_accessors.getSegmentValue) _accessors.getSegmentValue = seg => seg.value;
+    if(!_accessors.setSegmentValue) _accessors.setSegmentValue = (seg, value) => seg.value = value;
+    if(!_accessors.getCategoryValue) _accessors.getCategoryValue = cat => cat.value;
+    if(!_accessors.setCategoryValue) _accessors.setCategoryValue = (cat, value) => cat.value = value;
+    if(!_accessors.getSegmentName) _accessors.getSegmentName = seg => seg.name;
+    if(!_accessors.getCategoryName) _accessors.getCategoryName = cat => cat.name;
+    if(!_accessors.sortSegments) _accessors.sortSegments = (a, b) => a.name.localeCompare(b.name);
+
     function create(data, domTarget) {
         var _data = data;
         var _chart = null;
@@ -24,18 +34,18 @@ function d3dp(config) {
 
         // Scales for segment mappings.
         var _segmentScale = d3.scaleLinear()
-            .domain([0, d3.max(_data, x => x.value)]) // Input data range.
+            .domain([0, d3.max(_data, x => _accessors.getSegmentValue(x))]) // Input data range.
             .range([0, 100]);
         
         // Scale for category mappings.
         var _categoryScale = d3.scaleLinear()
-            .domain([0, d3.max(_data, s => d3.max(s.categories, c => c.value))])
+            .domain([0, d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)))])
             .range([0, _outerRadius - _outerBufferZone]);
         
         // Pie Segment helper.
         var pieGenerator = d3.pie()
-            .value(d => _segmentScale(d.value))
-            .sort((a, b) => a.name.localeCompare(b.name));
+            .value(d => _segmentScale(_accessors.getSegmentValue(d)))
+            .sort(_accessors.sortSegments);
     
         // Arc calculation helper.
         var arcGenerator = d3.arc()
@@ -61,22 +71,22 @@ function d3dp(config) {
 
         function shiftSegment(segment, amount, scale) {
             if(amount == 0) return false;
-            var v = segment.value + amount;
+            var v = _accessors.getSegmentValue(segment) + amount;
 
             if(scale(v) > _segmentDragMin) {
-                segment.value = v;
+                _accessors.setSegmentValue(segment, v);
                 return true;
             }
             else return false;
         }
 
-        function shiftCategory(category, amount, scale) {
+        function shiftCategory(category, amount, scale, parentSegment) {
             if(amount == 0) return false;
-            var v = category.value - amount;
+            var v = _accessors.getCategoryValue(category) - amount;
 
             // Prevent value becoming less than enforced minimum segment size.
             if(scale(v) > _categoryDragMin && scale(v) < _outerRadius - _outerBufferZone) {
-                category.value = v;
+                _accessors.setCategoryValue(category, v, parentSegment);
                 return true;
             }
             else return false;
@@ -91,7 +101,7 @@ function d3dp(config) {
 
         function catDragged(d) {
             if((_dragSegmentAndCategoryTogether && shiftSegment(d.parentSegment, d3.event.dx/2, _segmentScale)) ||
-                shiftCategory(d.category, d3.event.dy, _categoryScale)) {
+                shiftCategory(d.category, d3.event.dy, _categoryScale, d.parentSegment)) {
                     if(_config.events && _config.events.category && _config.events.category.drag) _config.events.category.drag(d.category, d.parentSegment);
                     draw();
                 }
@@ -149,12 +159,12 @@ function d3dp(config) {
                     catPaths.push({
                         category: seg.data.categories[j],
                         parentSegment: seg.data,
-                        path: catArc({ outerRadius: _innerRadius + _categoryScale(seg.data.categories[j].value) })
+                        path: catArc({ outerRadius: _innerRadius + _categoryScale(_accessors.getCategoryValue(seg.data.categories[j])) })
                     });
                 }
 
                 // Sort by descending size so smaller ones are not hidden by bigger ones.
-                catPaths.sort((a, b) => d3.descending(a.category.value, b.category.value));
+                catPaths.sort((a, b) => d3.descending(_accessors.getCategoryValue(a.category), _accessors.getCategoryValue(b.category)));
 
                 // Select.
                 var c = d3.select(_chart_g)

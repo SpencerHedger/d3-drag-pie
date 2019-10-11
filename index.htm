@@ -50,6 +50,12 @@
             function ready() {
                 dragpie = d3dp({
                     categoryColors: ["green", "violet", "red"],
+                    accessors: {
+                        getSegmentValue: function(seg) { return seg.value },
+                        setSegmentValue: function(seg, value) { seg.value = value; },
+                        getCategoryValue: function(cat) { return cat.value },
+                        setCategoryValue: function(cat, value, seg) { cat.value = value; }
+                    },
                     events: {
                         segment: {
                             mouseover: function(seg) { console.log(seg.name) },
