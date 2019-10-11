@@ -17,6 +17,7 @@ function d3dp(config) {
         var _categoryDragMin = 5; // Category minimum permitted size when dragging.
 
         var _dragSegmentAndCategoryTogether = false; // Combined x drag segment and y drag category.
+        var _isDragging = false; // Indicates true whilst segments or categories are dragged.
 
         var _color = d3.scaleOrdinal()
             .range(config.categoryColors);
@@ -96,6 +97,14 @@ function d3dp(config) {
                 }
         }
 
+        function startDragging() {
+            _isDragging = true;
+        }
+
+        function endDragging() {
+            _isDragging = false;
+        }
+
         function draw() {
             var arcData = pieGenerator(_data);
 
@@ -108,12 +117,16 @@ function d3dp(config) {
             var nEnter = n.enter()
                 .append('path')
                 .attr('d', arcGenerator)
-                .call(d3.drag().on("drag", segDragged));
+                .call(d3.drag()
+                    .on('start', startDragging)
+                    .on('drag', segDragged)
+                    .on('end', endDragging)
+                    );
             
             if(_config.events && _config.events.segment) {
-                if(_config.events.segment.mouseover) nEnter.on('mouseover', d => _config.events.segment.mouseover(d.data))
-                if(_config.events.segment.mouseout) nEnter.on('mouseout', d => _config.events.segment.mouseout(d.data))
-                if(_config.events.segment.click) nEnter.on('click', d => _config.events.segment.click(d.data));
+                if(_config.events.segment.mouseover) nEnter.on('mouseover', function(d) { if(!_isDragging) _config.events.segment.mouseover(d.data) })
+                if(_config.events.segment.mouseout) nEnter.on('mouseout', function(d) { if(!_isDragging) _config.events.segment.mouseout(d.data) })
+                if(_config.events.segment.click) nEnter.on('click', function(d) { if(!_isDragging) _config.events.segment.click(d.data) });
             }
 
             // Update.
@@ -154,12 +167,16 @@ function d3dp(config) {
                     .attr('d', x => x.path)
                     .attr('class', 'segcats' + i)
                     .style('fill', x => _color(x.category.id))
-                    .call(d3.drag().on("drag", catDragged));
+                    .call(d3.drag()
+                            .on('start', startDragging)
+                            .on('drag', catDragged)
+                            .on('end', endDragging)
+                        );
 
                 if(_config.events && _config.events.category) {
-                    if(_config.events.category.mouseover) cEnter.on('mouseover', d => _config.events.category.mouseover(d.category, d.parentSegment))
-                    if(_config.events.category.mouseout) cEnter.on('mouseout', d => _config.events.category.mouseout(d.category, d.parentSegment))
-                    if(_config.events.category.click) cEnter.on('click', d => _config.events.category.click(d.category, d.parentSegment));
+                    if(_config.events.category.mouseover) cEnter.on('mouseover', function(d) { if(!_isDragging) _config.events.category.mouseover(d.category, d.parentSegment) })
+                    if(_config.events.category.mouseout) cEnter.on('mouseout', function(d) { if(!_isDragging) _config.events.category.mouseout(d.category, d.parentSegment) })
+                    if(_config.events.category.click) cEnter.on('click', function(d) { if(!_isDragging) _config.events.category.click(d.category, d.parentSegment) });
                 }
 
                 // Update.
