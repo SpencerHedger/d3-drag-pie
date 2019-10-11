@@ -23,9 +23,9 @@ function d3dp() {
         var _pieRadius = 500;
 
         var _innerRadius = 0;
-        var _outerRadius = 100; // Category data maximum value.
+        var _outerRadius = 100; // Category data maximum value when scaled.
         var _outerBufferZone = 10; // Outer handle zone for background segment.
-        var _cornerRadius = 5;
+        var _cornerRadius = _config.cornerRadius || 0;
 
         var _segmentDragMin = 5; // Segment minimum permitted size when dragging.
         var _categoryDragMin = 5; // Category minimum permitted size when dragging.
