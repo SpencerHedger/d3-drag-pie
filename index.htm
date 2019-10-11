@@ -44,11 +44,14 @@
                         ] }
                 ];
             
-            var dragpie = null;
             var n1 = null;
 
             function ready() {
-                dragpie = d3dp({
+                var dragpie = d3dp();
+
+                n1 = dragpie.create({
+                    target: document.getElementById('pie'),
+                    data: d,
                     categoryColors: ["green", "violet", "red"],
                     accessors: {
                         getSegmentValue: function(seg) { return seg.value },
@@ -70,8 +73,6 @@
                         }
                     }
                 });
-
-                n1 = dragpie.create(d, document.getElementById('pie'));
             }
         </script>
     </head>

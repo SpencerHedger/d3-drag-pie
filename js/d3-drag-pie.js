@@ -2,21 +2,21 @@
  * Author: Spencer Hedger
  * GitHub: https://github.com/spencerhedger/d3-drag-pie
  */
-function d3dp(config) {
-    var _config = config;
+function d3dp() {
+    function create(config) {
+        var _config = config; // Keep a reference to the configuration.
 
-    // Accessors for data values (provide some basic ones where not implemented in configuration)
-    var _accessors = _config.accessors || {};
-    if(!_accessors.getSegmentValue) _accessors.getSegmentValue = seg => seg.value;
-    if(!_accessors.setSegmentValue) _accessors.setSegmentValue = (seg, value) => seg.value = value;
-    if(!_accessors.getCategoryValue) _accessors.getCategoryValue = cat => cat.value;
-    if(!_accessors.setCategoryValue) _accessors.setCategoryValue = (cat, value) => cat.value = value;
-    if(!_accessors.getSegmentName) _accessors.getSegmentName = seg => seg.name;
-    if(!_accessors.getCategoryName) _accessors.getCategoryName = cat => cat.name;
-    if(!_accessors.sortSegments) _accessors.sortSegments = (a, b) => a.name.localeCompare(b.name);
+        // Accessors for data values (provide some basic ones where not implemented in configuration)
+        var _accessors = _config.accessors || {};
+        if(!_accessors.getSegmentValue) _accessors.getSegmentValue = seg => seg.value;
+        if(!_accessors.setSegmentValue) _accessors.setSegmentValue = (seg, value) => seg.value = value;
+        if(!_accessors.getCategoryValue) _accessors.getCategoryValue = cat => cat.value;
+        if(!_accessors.setCategoryValue) _accessors.setCategoryValue = (cat, value) => cat.value = value;
+        if(!_accessors.getSegmentName) _accessors.getSegmentName = seg => seg.name;
+        if(!_accessors.getCategoryName) _accessors.getCategoryName = cat => cat.name;
+        if(!_accessors.sortSegments) _accessors.sortSegments = (a, b) => a.name.localeCompare(b.name);
 
-    function create(data, domTarget) {
-        var _data = data;
+        var _data = _config.data; // Keep a reference to the data object.
         var _chart = null;
         var _chart_g = null;
         
@@ -36,14 +36,18 @@ function d3dp(config) {
         var _color = d3.scaleOrdinal()
             .range(config.categoryColors);
 
+        // Initial maximal values of data for segments and categories.
+        var _initialSegmentMax = d3.max(_data, x => _accessors.getSegmentValue(x));
+        var _initialCategoryMax = d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)));
+
         // Scales for segment mappings.
         var _segmentScale = d3.scaleLinear()
-            .domain([0, d3.max(_data, x => _accessors.getSegmentValue(x))]) // Input data range.
+            .domain([0, _initialSegmentMax]) // Input data range.
             .range([0, 100]);
         
         // Scale for category mappings.
         var _categoryScale = d3.scaleLinear()
-            .domain([0, d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)))])
+            .domain([0, _initialCategoryMax])
             .range([0, _outerRadius - _outerBufferZone]);
         
         // Pie Segment helper.
@@ -70,7 +74,7 @@ function d3dp(config) {
                 (_pieRadius / (_pieRadius/_outerRadius)) + ')');
 
             _chart.appendChild(_chart_g);
-            domTarget.appendChild(_chart);
+            _config.target.appendChild(_chart);
         }
 
         function shiftSegment(segment, amount, scale) {
