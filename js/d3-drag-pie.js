@@ -52,14 +52,14 @@ function d3dp(config) {
         }
 
         function segDragged(d) {
-            d.data.value += d3.event.dx;            
+            d.data.value += d3.event.dx/2;            
             checkBounds(d.data);
             draw();
         }
 
         function catDragged(d) {
             d.parentSegment.value += d3.event.dx;;
-            d.category.value -= d3.event.dy;
+            d.category.value -= d3.event.dy/2;
             checkBounds(d.parentSegment, d.category);
             draw();
         }
