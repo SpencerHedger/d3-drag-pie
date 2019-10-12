@@ -80,7 +80,7 @@ function d3dp() {
 
         function shiftSegment(segment, amount, scale) {
             if(amount == 0) return false;
-            var v = _accessors.getSegmentValue(segment) + amount;
+            var v = _accessors.getSegmentValue(segment) + Math.floor(amount);
 
             if(scale(v) > _segmentDragMin) {
                 _accessors.setSegmentValue(segment, v);
@@ -91,7 +91,7 @@ function d3dp() {
 
         function shiftCategory(category, amount, scale, parentSegment) {
             if(amount == 0) return false;
-            var v = _accessors.getCategoryValue(category) - amount;
+            var v = _accessors.getCategoryValue(category) - Math.floor(amount);
 
             // Prevent value becoming less than enforced minimum segment size.
             if(scale(v) > _categoryDragMin && scale(v) < _outerRadius - _outerBufferZone) {
