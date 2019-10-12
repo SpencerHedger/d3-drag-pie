@@ -53,6 +53,11 @@
             
             var n1 = null;
 
+            // Show some message text in the info box.
+            function msg(text) {
+                document.getElementById('info').innerHTML = text;
+            }
+
             function ready() {
                 var dragpie = d3dp();
 
@@ -78,17 +83,19 @@
                         setCategoryValue: function(cat, value, seg) { cat.value = value; }
                     },
                     events: {
+                        startRedraw: (x) => console.log(x),
+                        endRedraw: (x,y) => console.log(x),
                         segment: {
-                            mouseover: seg => document.getElementById('info').innerHTML = seg.name + ' = ' + seg.value,
-                            mouseout: seg => document.getElementById('info').innerHTML = '',
+                            mouseover: seg => msg(seg.name + ' = ' + seg.value),
+                            mouseout: seg => msg(''),
                             click: function(seg) { console.log(seg.name) },
-                            drag: seg => document.getElementById('info').innerHTML = seg.name + ' = ' + seg.value
+                            drag: seg => msg(seg.name + ' = ' + seg.value)
                         },
                         category: {
-                            mouseover: (cat, seg) => document.getElementById('info').innerHTML = cat.name + ' = ' + cat.value,
-                            mouseout: (cat, seg) => document.getElementById('info').innerHTML = '',
+                            mouseover: (cat, seg) => msg(cat.name + ' = ' + cat.value),
+                            mouseout: (cat, seg) => msg(''),
                             click: function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) },
-                            drag:  (cat, seg) => document.getElementById('info').innerHTML = cat.name + ' = ' + cat.value
+                            drag:  (cat, seg) => msg(cat.name + ' = ' + cat.value)
                         }
                     }
                 });
