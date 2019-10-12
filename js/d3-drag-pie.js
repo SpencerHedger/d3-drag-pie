@@ -32,7 +32,7 @@ function d3dp() {
         var _isDragging = false; // Indicates true whilst segments or categories are dragged.
 
         // Segment colours.
-        var _color = d3.scaleOrdinal().range(_config.categoryColors? _config.categoryColors : ['orange', 'red', 'blue', 'green', 'purple', 'green']);
+        var _color = d3.scaleOrdinal().range(_config.categoryColors? _config.categoryColors : ["rgb(83, 100, 172)", "rgb(146, 157, 202)", "rgb(186, 193, 221)"]);
 
         // Minimal values of data for segments and categories.
         var _segmentMin = _config.segmentMinimum || 5; // Segment minimum permitted size when dragging.
