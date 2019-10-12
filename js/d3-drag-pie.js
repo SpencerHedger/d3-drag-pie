@@ -28,27 +28,28 @@ function d3dp() {
         var _outerBufferZone = 10; // Outer handle zone for background segment.
         var _cornerRadius = _config.cornerRadius || 0;
 
-        var _segmentDragMin = _config.segmentDragMinimum || 5; // Segment minimum permitted size when dragging.
-        var _categoryDragMin = _config.categoryDragMinimum || 5; // Category minimum permitted size when dragging.
-
         var _dragSegmentAndCategoryTogether = false; // Combined x drag segment and y drag category.
         var _isDragging = false; // Indicates true whilst segments or categories are dragged.
 
         var _color = d3.scaleOrdinal()
             .range(config.categoryColors);
 
-        // Initial maximal values of data for segments and categories.
-        var _segmentScaleMax = _config.segmentScaleMaximum || d3.max(_data, x => _accessors.getSegmentValue(x));
-        var _categoryScaleMax = _config.categoryScaleMaximum || d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)));
+        // Minimal values of data for segments and categories.
+        var _segmentMin = _config.segmentMinimum || 5; // Segment minimum permitted size when dragging.
+        var _categoryMin = _config.categoryMinimum || 5; // Category minimum permitted size when dragging.
+
+        // Maximal values of data for segments and categories.
+        var _segmentMax = _config.segmentMaximum || d3.max(_data, x => _accessors.getSegmentValue(x));
+        var _categoryMax = _config.categoryMaximum || d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)));
 
         // Scales for segment mappings.
         var _segmentScale = d3.scaleLinear()
-            .domain([0, _segmentScaleMax]) // Input data range.
+            .domain([0, _segmentMax]) // Input data range.
             .range([0, 100]);
         
         // Scale for category mappings.
         var _categoryScale = d3.scaleLinear()
-            .domain([0, _categoryScaleMax])
+            .domain([0, _categoryMax])
             .range([0, _outerRadius - _outerBufferZone]);
         
         // Pie Segment helper.
@@ -78,23 +79,23 @@ function d3dp() {
             _config.target.appendChild(_chart);
         }
 
-        function shiftSegment(segment, amount, scale) {
+        function shiftSegment(segment, amount) {
             if(amount == 0) return false;
             var v = _accessors.getSegmentValue(segment) + ((_config.integerValueStepping)? Math.floor(amount) : amount);
 
-            if(v >= _segmentDragMin) {
+            if(v >= _segmentMin && v <= _segmentMax) {
                 _accessors.setSegmentValue(segment, v);
                 return true;
             }
             else return false;
         }
 
-        function shiftCategory(category, amount, scale, parentSegment) {
+        function shiftCategory(category, amount, parentSegment) {
             if(amount == 0) return false;
             var v = _accessors.getCategoryValue(category) - ((_config.integerValueStepping)? Math.floor(amount) : amount);
 
             // Prevent value becoming less than enforced minimum segment size.
-            if(v >= _categoryDragMin && scale(v) <= _outerRadius - _outerBufferZone) {
+            if(v >= _categoryMin && v <= _categoryMax) {
                 _accessors.setCategoryValue(category, v, parentSegment);
                 return true;
             }
@@ -102,15 +103,15 @@ function d3dp() {
         }
 
         function segDragged(d) {
-            if(shiftSegment(d.data, d3.event.dx, _segmentScale)) {
+            if(shiftSegment(d.data, d3.event.dx)) {
                 if(_config.events && _config.events.segment && _config.events.segment.drag) _config.events.segment.drag(d.data);
                 draw();
             }
         }
 
         function catDragged(d) {
-            if((_dragSegmentAndCategoryTogether && shiftSegment(d.parentSegment, d3.event.dx/2, _segmentScale)) ||
-                shiftCategory(d.category, d3.event.dy, _categoryScale, d.parentSegment)) {
+            if((_dragSegmentAndCategoryTogether && shiftSegment(d.parentSegment, d3.event.dx/2)) ||
+                shiftCategory(d.category, d3.event.dy, d.parentSegment)) {
                     if(_config.events && _config.events.category && _config.events.category.drag) _config.events.category.drag(d.category, d.parentSegment);
                     draw();
                 }
