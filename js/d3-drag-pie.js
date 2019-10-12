@@ -28,8 +28,8 @@ function d3dp() {
         var _outerBufferZone = 10; // Outer handle zone for background segment.
         var _cornerRadius = _config.cornerRadius || 0;
 
-        var _segmentDragMin = 5; // Segment minimum permitted size when dragging.
-        var _categoryDragMin = 5; // Category minimum permitted size when dragging.
+        var _segmentDragMin = _config.segmentDragMinimum || 5; // Segment minimum permitted size when dragging.
+        var _categoryDragMin = _config.categoryDragMinimum || 5; // Category minimum permitted size when dragging.
 
         var _dragSegmentAndCategoryTogether = false; // Combined x drag segment and y drag category.
         var _isDragging = false; // Indicates true whilst segments or categories are dragged.
@@ -82,7 +82,7 @@ function d3dp() {
             if(amount == 0) return false;
             var v = _accessors.getSegmentValue(segment) + ((_config.integerValueStepping)? Math.floor(amount) : amount);
 
-            if(scale(v) > _segmentDragMin) {
+            if(v >= _segmentDragMin) {
                 _accessors.setSegmentValue(segment, v);
                 return true;
             }
@@ -94,7 +94,7 @@ function d3dp() {
             var v = _accessors.getCategoryValue(category) - ((_config.integerValueStepping)? Math.floor(amount) : amount);
 
             // Prevent value becoming less than enforced minimum segment size.
-            if(scale(v) > _categoryDragMin && scale(v) <= _outerRadius - _outerBufferZone) {
+            if(v >= _categoryDragMin && scale(v) <= _outerRadius - _outerBufferZone) {
                 _accessors.setCategoryValue(category, v, parentSegment);
                 return true;
             }
