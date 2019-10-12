@@ -179,58 +179,61 @@ function d3dp() {
             // Categories in segments
             for(var i = 0; i < arcData.length; i++) {
                 var seg = arcData[i];
-                var catPaths = [];
 
-                var catArc = d3.arc()
-                    .startAngle(seg.startAngle)
-                    .endAngle(seg.endAngle)
-                    .innerRadius(_innerRadius);
+                if(seg.data.categories) {
+                    var catPaths = [];
 
-                for(var j = 0; j < seg.data.categories.length; j++) {
-                    catPaths.push({
-                        category: seg.data.categories[j],
-                        parentSegment: seg.data,
-                        path: catArc({ outerRadius: _innerRadius + _categoryScale(_accessors.getCategoryValue(seg.data.categories[j])) })
-                    });
+                    var catArc = d3.arc()
+                        .startAngle(seg.startAngle)
+                        .endAngle(seg.endAngle)
+                        .innerRadius(_innerRadius);
+
+                    for(var j = 0; j < seg.data.categories.length; j++) {
+                        catPaths.push({
+                            category: seg.data.categories[j],
+                            parentSegment: seg.data,
+                            path: catArc({ outerRadius: _innerRadius + _categoryScale(_accessors.getCategoryValue(seg.data.categories[j])) })
+                        });
+                    }
+
+                    // Sort by descending size so smaller ones are not hidden by bigger ones.
+                    catPaths.sort((a, b) => d3.descending(_accessors.getCategoryValue(a.category), _accessors.getCategoryValue(b.category)));
+
+                    // Select.
+                    var c = d3.select(_chart_g)
+                        .selectAll('.d3dp-segment-category' + i)
+                        .data(catPaths);
+                    
+                    // Enter.
+                    var cEnter = c.enter()
+                        .append('path')
+                        .attr('d', x => x.path)
+                        .attr("id", (d,j) => 'd3dp-segment' + i + '-category' + j)
+                        .attr('class', 'd3dp-segment-categories d3dp-segment-category' + i)
+                        .style('fill', x => _color(x.category.id))
+
+                    if(_config.categoriesDraggable) {
+                        cEnter
+                            .style('cursor', 'ns-resize')
+                            .call(d3.drag()
+                                .on('start', startDragging)
+                                .on('drag', catDragged)
+                                .on('end', endDragging)
+                            );
+                    }
+
+                    if(_config.events && _config.events.category) {
+                        if(_config.events.category.mouseover) cEnter.on('mouseover', function(d) { if(!_isDragging) _config.events.category.mouseover(d.category, d.parentSegment) })
+                        if(_config.events.category.mouseout) cEnter.on('mouseout', function(d) { if(!_isDragging) _config.events.category.mouseout(d.category, d.parentSegment) })
+                        if(_config.events.category.click) cEnter.on('click', function(d) { if(!_isDragging) _config.events.category.click(d.category, d.parentSegment) });
+                    }
+
+                    // Update.
+                    c.attr('d', x => x.path);
+
+                    // Exit.
+                    c.exit().remove();
                 }
-
-                // Sort by descending size so smaller ones are not hidden by bigger ones.
-                catPaths.sort((a, b) => d3.descending(_accessors.getCategoryValue(a.category), _accessors.getCategoryValue(b.category)));
-
-                // Select.
-                var c = d3.select(_chart_g)
-                    .selectAll('.d3dp-segment-category' + i)
-                    .data(catPaths);
-                
-                // Enter.
-                var cEnter = c.enter()
-                    .append('path')
-                    .attr('d', x => x.path)
-                    .attr("id", (d,j) => 'd3dp-segment' + i + '-category' + j)
-                    .attr('class', 'd3dp-segment-categories d3dp-segment-category' + i)
-                    .style('fill', x => _color(x.category.id))
-
-                if(_config.categoriesDraggable) {
-                    cEnter
-                        .style('cursor', 'ns-resize')
-                        .call(d3.drag()
-                            .on('start', startDragging)
-                            .on('drag', catDragged)
-                            .on('end', endDragging)
-                        );
-                }
-
-                if(_config.events && _config.events.category) {
-                    if(_config.events.category.mouseover) cEnter.on('mouseover', function(d) { if(!_isDragging) _config.events.category.mouseover(d.category, d.parentSegment) })
-                    if(_config.events.category.mouseout) cEnter.on('mouseout', function(d) { if(!_isDragging) _config.events.category.mouseout(d.category, d.parentSegment) })
-                    if(_config.events.category.click) cEnter.on('click', function(d) { if(!_isDragging) _config.events.category.click(d.category, d.parentSegment) });
-                }
-
-                // Update.
-                c.attr('d', x => x.path);
-
-                // Exit.
-                c.exit().remove();
             }
 
             return _chart;
