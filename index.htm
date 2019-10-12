@@ -40,7 +40,7 @@
                     { name: "Segment 4", value: 10,
                         categories: [
                             { id: 0, name: "Category 1", value: 10 },
-                            { id: 1, name: "Category 2", value: 10 },
+                            { id: 1, name: "Category 2", value: 15 },
                             { id: 2, name: "Category 3", value: 50 }
                         ] },
                     { name: "Segment 5", value: 30,
@@ -61,11 +61,14 @@
                     size: 650,
                     data: d,
                     categoryColors: ["rgb(186, 193, 221)", "rgb(146, 157, 202)", "rgb(83, 100, 172)"],
-                    segmentScaleMaximum: 100,
-                    categoryScaleMaximum: 60,
+                    segmentMaximum: 100,
+                    categoryMaximum: 60,
                     showSegmentLabels: true,
                     segmentsDraggable: true,
+                    segmentMinimum: 5,
                     categoriesDraggable: true,
+                    categoryMinimum: 10,
+                    integerValueStepping: true,
                     accessors: {
                         getSegmentValue: function(seg) { return seg.value },
                         setSegmentValue: function(seg, value) { seg.value = value; },
