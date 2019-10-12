@@ -41,6 +41,7 @@ function d3dp() {
         // Maximal values of data for segments and categories.
         var _segmentMax = _config.segmentMaximum || d3.max(_data, x => _accessors.getSegmentValue(x));
         var _categoryMax = _config.categoryMaximum || d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)));
+        var _categoryScaleMax = _config.categoryScaleMaximum || d3.max(_data, s => d3.max(s.categories, c => d3.max([_accessors.getCategoryValue(c), _categoryMax]) * s.categories.length));
 
         // Scales for segment mappings.
         var _segmentScale = d3.scaleLinear()
@@ -49,7 +50,7 @@ function d3dp() {
         
         // Scale for category mappings.
         var _categoryScale = d3.scaleLinear()
-            .domain([0, _categoryMax])
+            .domain([0, _categoryScaleMax])
             .range([0, _outerRadius - _outerBufferZone]);
         
         // Pie Segment helper.
@@ -189,16 +190,24 @@ function d3dp() {
                         .endAngle(seg.endAngle)
                         .innerRadius(_innerRadius);
 
+                    var runningTotal = 0;
+
                     for(var j = 0; j < seg.data.categories.length; j++) {
+                        var v = _accessors.getCategoryValue(seg.data.categories[j]);
+
                         catPaths.push({
+                            index: j,
                             category: seg.data.categories[j],
                             parentSegment: seg.data,
-                            path: catArc({ outerRadius: _innerRadius + _categoryScale(_accessors.getCategoryValue(seg.data.categories[j])) })
+                            path: catArc({ outerRadius: _innerRadius + _categoryScale(v + ((_config.categoryStacking)? runningTotal : 0)) })
                         });
+
+                        runningTotal += v;
                     }
 
                     // Sort by descending size so smaller ones are not hidden by bigger ones.
-                    catPaths.sort((a, b) => d3.descending(_accessors.getCategoryValue(a.category), _accessors.getCategoryValue(b.category)));
+                    if(!_config.categoryStacking) catPaths.sort((a, b) => d3.descending(_accessors.getCategoryValue(a.category), _accessors.getCategoryValue(b.category)));
+                    else catPaths.sort((a, b) => d3.descending(a.index, b.index));
 
                     // Select.
                     var c = d3.select(_chart_g)
