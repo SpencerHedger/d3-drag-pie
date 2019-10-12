@@ -5,12 +5,12 @@
     
         <style>
             body {
-                font-family: verdana;
+                font-family: arial, verdana;
             }
             path.d3dp-segment {
                 fill: whitesmoke;
                 stroke: silver;
-                stroke-dasharray: 5;
+                stroke-dasharray: 1;
             }
             path.d3dp-segment-categories {
                 stroke: black;
@@ -58,6 +58,7 @@
 
                 n1 = dragpie.create({
                     target: document.getElementById('pie'),
+                    size: 650,
                     data: d,
                     categoryColors: ["rgb(186, 193, 221)", "rgb(146, 157, 202)", "rgb(83, 100, 172)"],
                     segmentScaleMaximum: 100,
