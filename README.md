@@ -6,7 +6,7 @@ This JavaScript library creates a pie chart with multiple segments, each contain
 The chart supports segment and category dragging which calls accessor functions to update
 the underlying data values.
 
-Interaction with the pie chart can be hooked into so your application can respond to certain chart events.
+Interaction with the pie chart can be hooked into, so your application can respond to certain chart interactions and events.
 
 ![Screenshot](docs/images/example.png)
 
@@ -14,14 +14,27 @@ Interaction with the pie chart can be hooked into so your application can respon
 Requires D3.js library from https://d3js.org
 Client browser requires SVG support.
 
+## Basic usage
+The `d3dp` function returns an object with a `create` function into which you pass a `config` object - see "Config object" section.
+
+```
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="./js/d3-drag-pie.js"></script>
+<script>
+    var config = { ... };
+    d3dp().create(config);
+</script>
+```
+
 ## `config` object
 When creating a new chart, you must specify a configuration object. This provides
 essential information about the chart so that it can be created.
 
 - `target` DOM object into which SVG chart will be rendered.
-- `data` Reference to the chart data object.
+- `data` Reference to the chart data object - see "Data object" section.
 - `size` Dimension in pixels of the chart square (optional, default 500).
-- `categoryColors` Array of colors to use for segments (optional).
+- `cornerRadius` Radius effect on segments (optional, default 0).
+- `categoryColors` Array of colors to use for segments (optional, three defaults provided).
 - `segmentsDraggable` When true, segments are draggable (optional, default false).
 - `categoriesDraggable` When true, categories are draggable (optional, default false).
 - `segmentMinimum` Minimum allowed value of any segment when dragged (optional).
@@ -34,6 +47,38 @@ essential information about the chart so that it can be created.
 - `integerValueStepping` Prevent dragging from creating fractional values.
 - `accessors` Object containing getter and setter functions for data values - see "Accessors" section (optional).
 - `events` Object containing custom functions to respond externally to certain chart interactions - see "Event hooks" section (optional).
+
+## Data object
+The data object is an array of segment objects. Each segment object has a name, value and array of categories. Each category object has a name and value.
+
+```
+var data = [
+        {
+            name: "Segment 1",
+            value: 20,
+            categories: [
+                { name: "Category 1", value: 10 },
+                { name: "Category 2", value: 30 }
+            ]
+        },
+        {
+            name: "Segment 2",
+            value: 40,
+            categories: [
+                { name: "Category 1", value: 30 },
+                { name: "Category 2", value: 20 }
+            ]
+        },
+        {
+            name: "Segment 3",
+            value: 50,
+            categories: [
+                { name: "Category 1", value: 30 },
+                { name: "Category 2", value: 25 }
+            ]
+        }
+    ];
+```
 
 ## Accessors
 A series of accessor functions are used to provide getter and setter functionality onto
