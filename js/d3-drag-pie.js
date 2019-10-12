@@ -152,6 +152,9 @@ function d3dp() {
 
         // Draw the chart and wire up events.
         function draw() {
+            // Call optionally configured post draw event.
+            if(_config.events && _config.events.startRedraw) _config.events.startRedraw(_data);
+
             var arcData = pieGenerator(_data);
 
             // Select.
@@ -277,6 +280,9 @@ function d3dp() {
                     c.exit().remove();
                 }
             }
+
+            // Call optionally configured post draw event.
+            if(_config.events && _config.events.endRedraw) _config.events.endRedraw(_data, _chart);
 
             return _chart; // Reference to the chart that has just been created.
         }
