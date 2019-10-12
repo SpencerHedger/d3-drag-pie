@@ -220,7 +220,7 @@ function d3dp() {
                         .attr('d', x => x.path)
                         .attr("id", (d,j) => 'd3dp-segment' + i + '-category' + j)
                         .attr('class', 'd3dp-segment-categories d3dp-segment-category' + i)
-                        .style('fill', x => _color(x.category.id))
+                        .style('fill', x => _color(x.index))
 
                     if(_config.categoriesDraggable) {
                         cEnter
