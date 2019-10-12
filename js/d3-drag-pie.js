@@ -94,7 +94,7 @@ function d3dp() {
             var v = _accessors.getCategoryValue(category) - Math.floor(amount);
 
             // Prevent value becoming less than enforced minimum segment size.
-            if(scale(v) > _categoryDragMin && scale(v) < _outerRadius - _outerBufferZone) {
+            if(scale(v) > _categoryDragMin && scale(v) <= _outerRadius - _outerBufferZone) {
                 _accessors.setCategoryValue(category, v, parentSegment);
                 return true;
             }
