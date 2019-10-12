@@ -74,15 +74,16 @@
                     },
                     events: {
                         segment: {
-                            mouseover: function(seg) { console.log(seg.name) },
+                            mouseover: seg => document.getElementById('info').innerHTML = seg.name + ' = ' + seg.value,
+                            mouseout: seg => document.getElementById('info').innerHTML = '',
                             click: function(seg) { console.log(seg.name) },
-                            drag:  function(seg) { console.log(seg.name) }
+                            drag: seg => document.getElementById('info').innerHTML = seg.name + ' = ' + seg.value
                         },
                         category: {
-                            mouseover: function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) },
-                            mouseout: function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) },                            
+                            mouseover: (cat, seg) => document.getElementById('info').innerHTML = cat.name + ' = ' + cat.value,
+                            mouseout: (cat, seg) => document.getElementById('info').innerHTML = '',
                             click: function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) },
-                            drag:  function(cat, seg) { console.log(seg.name + ' -> ' + cat.name) }
+                            drag:  (cat, seg) => document.getElementById('info').innerHTML = cat.name + ' = ' + cat.value
                         }
                     }
                 });
@@ -91,5 +92,6 @@
     </head>
     <body onload="ready();" >
         <div id="pie"></div>
+        <div id="info"></div>
     </body>
 </html>
