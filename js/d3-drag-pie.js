@@ -20,8 +20,8 @@ function d3dp() {
         var _chart = null;
         var _chart_g = null;
         
-        var _pieRadius = 500;
-        var _svgSize = _pieRadius + (_pieRadius / 3);
+        var _pieRadius = _config.size || 500;
+        var _svgSize = _pieRadius + (_pieRadius / 5); // Add padding of 1/5.
 
         var _innerRadius = 0;
         var _outerRadius = 100; // Category data maximum value when scaled.
