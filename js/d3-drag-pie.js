@@ -252,7 +252,7 @@ function d3dp() {
                         .append('path')
                         .attr('d', x => x.path)
                         .attr("id", (d,j) => 'd3dp-segment' + i + '-category' + j)
-                        .attr('class', 'd3dp-segment-categories d3dp-segment-category' + i)
+                        .attr('class', 'd3dp-segment-category d3dp-segment-category' + i)
                         .style('fill', x => _color(x.index))
 
                     // Enable dragging (if configured).
