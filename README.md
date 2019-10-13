@@ -26,7 +26,7 @@ The `d3dp` function returns an object with a `create` function into which you pa
 </script>
 ```
 
-See the basic [working example](index.htm) provided to help get started.
+See the basic [working example](example.htm) provided to help get started.
 
 ## `config` object
 When creating a new chart, you must specify a configuration object. This provides
