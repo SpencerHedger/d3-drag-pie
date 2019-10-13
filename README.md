@@ -234,3 +234,19 @@ Define within `events.category` object.
 Arguments:
 - `category` Reference to the category.
 - `segment` Reference to the segment.
+
+## CSS classes
+The chart segments and categories are created with some pre-defined CSS classes attached.
+
+CSS classes:
+- `d3dp-segment` Class of segment SVG path.
+- `d3dp-segment-text-label` Class of text label of segment.
+- `d3dp-segment-category` Class of category SVG path.
+- `d3dp-segment-category<c>` Class of specific category, where `<c>` is the index in category data array.
+
+## SVG object IDs
+The chart segments and categories are created with some pre-fefined `id` attributes.
+
+Id attributes:
+- `d3dp-segment<s>` Attached to each segment on the SVG chart, where `<s>` is the index in data array.
+- `d3dp-segment<s>-category<c>` Attached to each category on the SVG chart, where `<s>` and`<c>` are the index of the segment and category in the data array respectively.
