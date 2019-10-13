@@ -15,7 +15,7 @@ Requires D3.js library from https://d3js.org
 Client browser requires SVG support.
 
 ## Basic usage
-The `d3dp` function returns an object with a `create` function into which you pass a `config` object - see "Config object" section.
+The `d3dp` function returns an object with a `create` function into which you pass a `config` object - see [Config object section](#config-object).
 
 ```
 <script src="https://d3js.org/d3.v5.min.js"></script>
@@ -26,12 +26,14 @@ The `d3dp` function returns an object with a `create` function into which you pa
 </script>
 ```
 
+See the basic [working example](index.htm) provided to help get started.
+
 ## `config` object
 When creating a new chart, you must specify a configuration object. This provides
 essential information about the chart so that it can be created.
 
 - `target` DOM object into which SVG chart will be rendered.
-- `data` Reference to the chart data object - see "Data object" section.
+- `data` Reference to the chart data object - see [Data object section](#data-object).
 - `size` Dimension in pixels of the chart square (optional, default 500).
 - `cornerRadius` Radius effect on segments (optional, default 0).
 - `categoryColors` Array of colors to use for segments (optional, three defaults provided).
@@ -45,8 +47,8 @@ essential information about the chart so that it can be created.
 - `categoryStacking` Stack categories rather than overlapping (optional, default false).
 - `showSegmentLabels` Show segment name labels (optional, default false).
 - `integerValueStepping` Prevent dragging from creating fractional values.
-- `accessors` Object containing getter and setter functions for data values - see "Accessors" section (optional).
-- `events` Object containing custom functions to respond externally to certain chart interactions - see "Event hooks" section (optional).
+- `accessors` Object containing getter and setter functions for data values - see [Accessors section](#accessors) (optional).
+- `events` Object containing custom functions to respond externally to certain chart interactions - see [Event hooks section](#event-hooks) (optional).
 
 ## Data object
 The data object is an array of segment objects. Each segment object has a name, value and array of categories. Each category object has a name and value.
