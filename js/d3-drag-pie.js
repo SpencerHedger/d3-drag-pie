@@ -28,7 +28,7 @@ function d3dp() {
         var _outerBufferZone = 20; // Outer handle zone for background segment.
         var _cornerRadius = _config.cornerRadius || 0; // Segment corner radius.
 
-        var _dragSegmentAndCategoryTogether = false; // Combined x drag segment and y drag category.
+        var _dragSegmentAndCategoryTogether = _config.dragSegmentAndCategoryTogether; // Combined x drag segment and y drag category.
         var _isDragging = false; // Indicates true whilst segments or categories are dragged.
 
         // Segment colours.

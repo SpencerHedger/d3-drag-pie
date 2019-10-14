@@ -47,6 +47,7 @@ essential information about the chart so that it can be created.
 - `categoryStacking` Stack categories rather than overlapping (optional, default false).
 - `showSegmentLabels` Show segment name labels (optional, default false).
 - `integerValueStepping` Prevent dragging from creating fractional values.
+- `dragSegmentAndCategoryTogether` Allow resizing of segment whilst dragging category (optional, default false).
 - `accessors` Object containing getter and setter functions for data values - see [Accessors section](#accessors) (optional).
 - `events` Object containing custom functions to respond externally to certain chart interactions - see [Event hooks section](#event-hooks) (optional).
 
