@@ -24,8 +24,8 @@ function d3dp() {
         var _svgSize = _pieRadius + (_pieRadius / 5); // Add padding of 1/5.
 
         var _innerRadius = 0; // Inner radius size in pixels.
-        var _outerRadius = 100; // Category data maximum value when scaled.
-        var _outerBufferZone = 10; // Outer handle zone for background segment.
+        var _outerRadius = _pieRadius/2; // Category data maximum value when scaled.
+        var _outerBufferZone = 20; // Outer handle zone for background segment.
         var _cornerRadius = _config.cornerRadius || 0; // Segment corner radius.
 
         var _dragSegmentAndCategoryTogether = false; // Combined x drag segment and y drag category.
@@ -76,9 +76,7 @@ function d3dp() {
             _chart.setAttribute('height', _svgSize);
 
             _chart_g = document.createElementNS("http://www.w3.org/2000/svg", 'g'); //Create a path in SVG's namespace
-            _chart_g.setAttribute('transform', 'scale(' +
-                ((_pieRadius / _outerRadius)/2) +
-                ') translate(' + (_svgSize / (_pieRadius/_outerRadius)) + ',' +
+            _chart_g.setAttribute('transform', 'translate(' + (_svgSize / (_pieRadius/_outerRadius)) + ',' +
                 (_svgSize / (_pieRadius/_outerRadius)) + ')');
 
             _chart.appendChild(_chart_g);
@@ -186,8 +184,8 @@ function d3dp() {
                     .data(arcData)
                     .enter().append('text')
                     .attr('class', 'd3dp-segment-text-label')
-                    .attr('style', 'font-size: 5px;')
-                    .attr('dy', 7)
+                    .attr('style', 'font-size: 13px;')
+                    .attr('dy', 15)
                     .attr('dx', 5)
                     .append('textPath')
                     .attr('xlink:href', (d,i) => '#d3dp-segment' + i)
