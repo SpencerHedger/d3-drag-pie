@@ -180,7 +180,7 @@ function d3dp() {
             //Append the label names (if configured).
             if(_config.showSegmentLabels) {
                 d3.select(_chart_g)
-                    .selectAll('.segmentTextLabel')
+                    .selectAll('.d3dp-segment-text-label')
                     .data(arcData)
                     .enter().append('text')
                     .attr('class', 'd3dp-segment-text-label')
