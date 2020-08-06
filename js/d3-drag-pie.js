@@ -20,6 +20,9 @@ function d3dp() {
         var _chart = null; // Chart SVG object.
         var _chart_g = null; // Chart SVG g object.
         
+        var _idPrefix = config.idPrefix || (Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5));
+        _idPrefix += '-'; 
+
         var _pieRadius = _config.size || 500; // Square size of chart in pixels.
         var _svgSize = _pieRadius + (_pieRadius / 5); // Add padding of 1/5.
 
@@ -30,6 +33,7 @@ function d3dp() {
 
         var _dragSegmentAndCategoryTogether = _config.dragSegmentAndCategoryTogether; // Combined x drag segment and y drag category.
         var _isDragging = false; // Indicates true whilst segments or categories are dragged.
+        var _deferredHover = null; // When dragging, hover events are supressed, this tracks the most recent mouseover object so the event can be fired once dragging finishes.
 
         // Segment colours.
         var _color = d3.scaleOrdinal().range(_config.categoryColors? _config.categoryColors : ["rgb(83, 100, 172)", "rgb(146, 157, 202)", "rgb(186, 193, 221)"]);
@@ -42,21 +46,21 @@ function d3dp() {
         var _segmentMax = _config.segmentMaximum || d3.max(_data, x => _accessors.getSegmentValue(x));
 
         // Maximal value of categories when dragging.
-        var _categoryMax = _config.categoryMaximum || d3.max(_data, s => d3.max(s.categories, c => _accessors.getCategoryValue(c)));
+        var _categoryMax = _config.categoryMaximum;
 
-        // Scale maximum value (default is based on _categoryMax and number of categories).
-        var _categoryScaleMax = _config.categoryScaleMaximum || d3.max(_data, s => d3.max(s.categories, c => d3.max([_accessors.getCategoryValue(c), _categoryMax]) * s.categories.length));
+        function getCategoryScale(categories) {
+            var scaleMax = _categoryMax;
+
+            return d3.scaleLinear()
+                .domain([0, scaleMax]) // Input data range.
+                .range([0, _outerRadius - _outerBufferZone]); // Map domain onto range compensating for buffer zone.
+        }
 
         // Scales for segment mappings.
         var _segmentScale = d3.scaleLinear()
             .domain([0, _segmentMax]) // Input data range.
             .range([0, _outerRadius]); // Map domain onto range based on outer radius.
-        
-        // Scale for category mappings.
-        var _categoryScale = d3.scaleLinear()
-            .domain([0, _categoryScaleMax]) // Input data range.
-            .range([0, _outerRadius - _outerBufferZone]); // Map domain onto range compensating for buffer zone.
-        
+         
         // Pie Segment helper.
         var pieGenerator = d3.pie()
             .value(d => _segmentScale(_accessors.getSegmentValue(d))) // Segment value.
@@ -92,8 +96,7 @@ function d3dp() {
 
             // Check within the minimum and maximum bounds of the segment.
             if(v >= _segmentMin && v <= _segmentMax) {
-                _accessors.setSegmentValue(segment, v);// Apply the value.
-                return true; // Indicate successful move.
+                return _accessors.setSegmentValue(segment, v); // Try to apply the value. Allow set method to determine success.
             }
             else return false; // Indicate failed to move.
         }
@@ -107,18 +110,19 @@ function d3dp() {
 
             // Prevent value becoming less than enforced minimum segment size.
             if(v >= _categoryMin && v <= _categoryMax) {
-                _accessors.setCategoryValue(category, v, parentSegment); // Apply the value.
-                return true; // Indicate successful move.
+                return _accessors.setCategoryValue(category, v, parentSegment); // Apply the value. Allow set method to determine success.
             }
             else return false; // Indicate failed to move.
         }
 
         // Handle segment dragging event.
         function segDragged(d) {
+            if(!_isDragging) startDragging(this);
+
             // Try to move the segment.
             if(shiftSegment(d.data, d3.event.dx)) {
                 // Fire associated config event.
-                if(_config.events && _config.events.segment && _config.events.segment.drag) _config.events.segment.drag(d.data);
+                if(_config.events && _config.events.segment && _config.events.segment.drag) _config.events.segment.drag(d.data, [ d3.event.sourceEvent.pageX, d3.event.sourceEvent.pageY ]);
                 
                 // Redraw the chart.
                 draw();
@@ -127,11 +131,13 @@ function d3dp() {
 
         // Handle category dragging event.
         function catDragged(d) {
+            if(!_isDragging) startDragging(this);
+ 
             // Try to move the segment (if configured behaviour) and the category.
             if((_dragSegmentAndCategoryTogether && shiftSegment(d.parentSegment, d3.event.dx/2)) ||
                 shiftCategory(d.category, d3.event.dy, d.parentSegment)) {
                     // Fire associated config event.
-                    if(_config.events && _config.events.category && _config.events.category.drag) _config.events.category.drag(d.category, d.parentSegment);
+                    if(_config.events && _config.events.category && _config.events.category.drag) _config.events.category.drag(d.category, d.parentSegment, [ d3.event.sourceEvent.pageX, d3.event.sourceEvent.pageY ]);
 
                     // Redraw the chart.
                     draw();
@@ -139,13 +145,78 @@ function d3dp() {
         }
 
         // Handle when dragging has begun.
-        function startDragging() {
+        function startDragging(obj) {
+            d3.select(obj).classed('d3dp-dragging', true);
+            clearSelected();
             _isDragging = true;
         }
 
         // Handle when dragging has ended.
         function endDragging() {
+            d3.select(this)
+                .classed('d3dp-dragging', false)
+                .classed('d3dp-hovering', _deferredHover == null);
+
             _isDragging = false;
+
+            // Need to simulate the hover event that got the mouse pointer where it is.
+            if(_deferredHover) {
+                var hover = d3.select(_deferredHover.target);
+                hover.classed('d3dp-hovering', true);
+
+                var m = resolveData(hover);
+
+                if(m.category == null) _config.events.segment.mouseover(m.segment, _deferredHover.mouse, hover.classed('d3dp-selected'));
+                else _config.events.category.mouseover(m.category, m.segment, _deferredHover.mouse, hover.classed('d3dp-selected'));
+
+                _deferredHover = null;
+            }
+        }
+
+        // Work out which for an event, which category and segment are the subjects.
+        function resolveData(obj) {
+            var seg = null;
+            var cat = null;
+            var d = obj.data();
+            if(d.length == 1) d = d[0];
+            if(d.data != undefined) d = d.data;
+
+            if(d.categories != undefined) seg = d;
+            else {
+                cat = d.category;
+                seg = d.parentSegment;
+            }
+
+            return { segment: seg, category: cat };
+        }
+
+        // Determine if a chart object is selected.
+        function isSelected(obj) {
+            return d3.select(obj).classed('d3dp-selected');
+        }
+
+        // Get the data (segment/category) of the selected chart object.
+        function getSelected() {
+            var sel = d3.select(_chart_g).select('.d3dp-selected');
+            if(sel) return resolveData(sel);
+            else return null;
+        }
+
+        // Deselect.
+        function clearSelected() {
+            d3.select(_chart_g).select('.d3dp-selected').classed('d3dp-selected', false);
+        }
+
+        // Select a chart object.
+        function setSelected(obj, selected) {
+            clearSelected();
+            if(selected) d3.select(obj).classed('d3dp-selected', true);
+        }
+
+        // Flip the selected state of a chart object.
+        function toggleSelected(obj) {
+            var selected = isSelected(obj);
+            setSelected(obj, !selected);
         }
 
         // Draw the chart and wire up events.
@@ -157,21 +228,21 @@ function d3dp() {
 
             // Select.
             var n = d3.select(_chart_g)
-                .selectAll('path')
+                .selectAll('.d3dp-segment')
                 .data(arcData);
 
             // Enter.
             var nEnter = n.enter()
                 .append('path')
                 .attr('d', arcGenerator)
-                .attr('id', (d,i) => 'd3dp-segment' + i)
+                .attr('id', (d,i) => 'd3dp-' + _idPrefix + 'segment' + i)
                 .attr('class', d => 'd3dp-segment')
 
             if(_config.segmentsDraggable) { // Enable dragging segments.
                 nEnter
                     .style('cursor', 'ew-resize')
                     .call(d3.drag()
-                        .on('start', startDragging)
+                        //.on('start', startDragging)
                         .on('drag', segDragged)
                         .on('end', endDragging)
                     );
@@ -184,19 +255,35 @@ function d3dp() {
                     .data(arcData)
                     .enter().append('text')
                     .attr('class', 'd3dp-segment-text-label')
-                    .attr('style', 'font-size: 13px;')
                     .attr('dy', 15)
                     .attr('dx', 5)
                     .append('textPath')
-                    .attr('xlink:href', (d,i) => '#d3dp-segment' + i)
+                    .attr('xlink:href', (d,i) => '#d3dp-' + _idPrefix + 'segment' + i)
                     .text(d => d.data.name);
             }
 
             // Wire up external configured event function calls.
             if(_config.events && _config.events.segment) {
-                if(_config.events.segment.mouseover) nEnter.on('mouseover', function(d) { if(!_isDragging) _config.events.segment.mouseover(d.data) })
-                if(_config.events.segment.mouseout) nEnter.on('mouseout', function(d) { if(!_isDragging) _config.events.segment.mouseout(d.data) })
-                if(_config.events.segment.click) nEnter.on('click', function(d) { if(!_isDragging) _config.events.segment.click(d.data) });
+                if(_config.events.segment.mouseover) nEnter.on('mouseover', function(d) {
+                    if(!_isDragging) { d3.select(this).classed('d3dp-hovering', true);
+                        _config.events.segment.mouseover(d.data, [ d3.event.pageX, d3.event.pageY ]);
+                    }
+                    else _deferredHover = { target: this, mouse: [ d3.event.pageX, d3.event.pageY ] };
+                });
+
+                if(_config.events.segment.mouseout) nEnter.on('mouseout', function(d) {
+                    if(!_isDragging) {
+                        d3.select(this).classed('d3dp-hovering', false);
+                        _config.events.segment.mouseout(d.data, [ d3.event.pageX, d3.event.pageY ]);
+                    }
+                    else if(_deferredHover != null && _deferredHover.target == this) _deferredHover = null;
+                });
+
+                if(_config.events.segment.click) nEnter.on('click', function(d) {
+                    if (d3.event.defaultPrevented) return; // dragged
+                    toggleSelected(this);
+                    if(!_isDragging) _config.events.segment.click(d.data, [ d3.event.pageX, d3.event.pageY ], isSelected(this));
+                });
             }
 
             // Update.
@@ -211,7 +298,12 @@ function d3dp() {
 
                 // Add categories, if they exist.
                 if(seg.data.categories) {
-                    var catPaths = []; // Array to hold category data.
+                    var createdCatPathsArray = false;
+                    if(!seg.data.catPaths) {
+                        seg.data.catPaths = [];
+                        createdCatPathsArray = true;
+                    }
+                    var catPaths = seg.data.catPaths; // Array to hold category data.
 
                     // Create the arc for basis of categories in the segment.
                     var catArc = d3.arc()
@@ -225,21 +317,30 @@ function d3dp() {
                         // Get the value for this category.
                         var v = _accessors.getCategoryValue(seg.data.categories[j]);
 
-                        // Create a data object.
-                        catPaths.push({
-                            index: j, // Maintain a record of original order.
-                            category: seg.data.categories[j], // Category object for data.
-                            parentSegment: seg.data, // Reference to segment that this category is in.
-                            path: catArc({ outerRadius: _innerRadius + _categoryScale(v + ((_config.categoryStacking)? runningTotal : 0)) }) // Arc for the segment.
-                        });
+                        // Find the category path object?
+                        var catPathObj = catPaths.find(o => o.index == j);
+                        var arc = catArc({ outerRadius: _innerRadius + getCategoryScale(seg.data.categories)(v + ((_config.categoryStacking)? runningTotal : 0)) }) // Arc for the segment.
+
+                        // Create a data object if needed.
+                        if(!catPathObj) {
+                            catPaths.push({
+                                index: j, // Maintain a record of original order.
+                                category: seg.data.categories[j], // Category object for data.
+                                parentSegment: seg.data, // Reference to segment that this category is in.
+                                path: arc
+                            });
+                        }
+                        else catPathObj.path = arc;
 
                         runningTotal += v; // Add value to the running total.
                     }
 
                     // Sort by descending size so smaller ones are not hidden by bigger ones.
-                    if(!_config.categoryStacking) catPaths.sort((a, b) => d3.descending(_accessors.getCategoryValue(a.category), _accessors.getCategoryValue(b.category)));
-                    else catPaths.sort((a, b) => d3.descending(a.index, b.index)); // Sort descending on the original category index so stacking is layered correctly.
-
+                    if(createdCatPathsArray) {
+                        if(!_config.categoryStacking) catPaths.sort((a, b) => d3.descending(_accessors.getCategoryValue(a.category), _accessors.getCategoryValue(b.category)));
+                        else catPaths.sort((a, b) => d3.descending(a.index, b.index)); // Sort descending on the original category index so stacking is layered correctly.
+                    }
+                    
                     // Select.
                     var c = d3.select(_chart_g)
                         .selectAll('.d3dp-segment-category' + i)
@@ -249,7 +350,7 @@ function d3dp() {
                     var cEnter = c.enter()
                         .append('path')
                         .attr('d', x => x.path)
-                        .attr("id", (d,j) => 'd3dp-segment' + i + '-category' + j)
+                        .attr("id", (d,j) => 'd3dp-' + _idPrefix + 'segment' + i + '-category' + j)
                         .attr('class', 'd3dp-segment-category d3dp-segment-category' + i)
                         .style('fill', x => _color(x.index))
 
@@ -258,7 +359,7 @@ function d3dp() {
                         cEnter
                             .style('cursor', 'ns-resize')
                             .call(d3.drag()
-                                .on('start', startDragging)
+                                //.on('start', startDragging)
                                 .on('drag', catDragged)
                                 .on('end', endDragging)
                             );
@@ -266,9 +367,27 @@ function d3dp() {
 
                     // Wire up external configured event function calls.
                     if(_config.events && _config.events.category) {
-                        if(_config.events.category.mouseover) cEnter.on('mouseover', function(d) { if(!_isDragging) _config.events.category.mouseover(d.category, d.parentSegment) })
-                        if(_config.events.category.mouseout) cEnter.on('mouseout', function(d) { if(!_isDragging) _config.events.category.mouseout(d.category, d.parentSegment) })
-                        if(_config.events.category.click) cEnter.on('click', function(d) { if(!_isDragging) _config.events.category.click(d.category, d.parentSegment) });
+                        if(_config.events.category.mouseover) cEnter.on('mouseover', function(d) {
+                            if(!_isDragging) {
+                                d3.select(this).classed('d3dp-hovering', true);
+                                _config.events.category.mouseover(d.category, d.parentSegment, [ d3.event.pageX, d3.event.pageY ]);
+                            }
+                            else _deferredHover = { target: this, mouse: [ d3.event.pageX, d3.event.pageY ] };
+                        });
+
+                        if(_config.events.category.mouseout) cEnter.on('mouseout', function(d) {
+                            if(!_isDragging) {
+                                d3.select(this).classed('d3dp-hovering', false);
+                                _config.events.category.mouseout(d.category, d.parentSegment, [ d3.event.pageX, d3.event.pageY ]);
+                            }
+                            else if(_deferredHover != null && _deferredHover.target == this) _deferredHover = null; 
+                        });
+
+                        if(_config.events.category.click) cEnter.on('click', function(d) {
+                            if (d3.event.defaultPrevented) return; // dragged
+                            toggleSelected(this);
+                            if(!_isDragging) _config.events.category.click(d.category, d.parentSegment, [ d3.event.pageX, d3.event.pageY ], isSelected(this));
+                        });
                     }
 
                     // Update.
@@ -291,7 +410,15 @@ function d3dp() {
 
         // Object to provide external functionality.
         return {
-            refresh: draw // Update chart when data values change externally.
+            refresh: draw, // Update chart when data values change externally.
+            getChartDomElement: function() { return _chart; },
+            getSelected: getSelected,
+            clearSelected: clearSelected,
+            data: _data,
+            categoryMinimum: _categoryMin,
+            categoryMaximum: _categoryMax,
+            segmentMinimum: _segmentMin,
+            segmentMaximum: _segmentMax
         };
     }
 
